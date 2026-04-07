@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { AnimatePresence, m } from "framer-motion";
 import Link from "next/link";
 import { Menu, Moon, Sun, X } from "lucide-react";
 import { useTheme } from "next-themes";
 import { SMOOTH_EASE } from "@/components/animations/constants";
+
+const emptySubscribe = () => () => {};
 
 function ClearEdgeLogo() {
   return (
@@ -57,8 +59,48 @@ function MobileNavLink({
   );
 }
 
+function ThemeToggleButton({
+  isDark,
+  mounted,
+  onClick,
+  className,
+}: {
+  isDark: boolean;
+  mounted: boolean;
+  onClick: () => void;
+  className: string;
+}) {
+  const showDarkTheme = mounted && isDark;
+  const ariaLabel = mounted
+    ? showDarkTheme
+      ? "Switch to light mode"
+      : "Switch to dark mode"
+    : "Toggle theme";
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={className}
+      aria-label={ariaLabel}
+    >
+      <Sun
+        className={`absolute inset-0 m-auto h-4 w-4 transition-opacity ${
+          showDarkTheme ? "opacity-100" : "opacity-0"
+        }`}
+      />
+      <Moon
+        className={`absolute inset-0 m-auto h-4 w-4 transition-opacity ${
+          showDarkTheme ? "opacity-0" : "opacity-100"
+        }`}
+      />
+    </button>
+  );
+}
+
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const { resolvedTheme, setTheme } = useTheme();
 
   const isDark = resolvedTheme === "dark";
@@ -66,8 +108,6 @@ export function Header() {
   const toggleTheme = () => {
     setTheme(isDark ? "light" : "dark");
   };
-
-  const showDarkTheme = isDark;
 
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl">
@@ -82,35 +122,21 @@ export function Header() {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
-          <button
-            type="button"
+          <ThemeToggleButton
+            isDark={isDark}
+            mounted={mounted}
             onClick={toggleTheme}
             className="relative h-8 w-8 rounded-full bg-secondary text-foreground hover:bg-muted"
-            aria-label={showDarkTheme ? "Switch to light mode" : "Switch to dark mode"}
-          >
-            <Sun
-              className={`absolute inset-0 m-auto h-4 w-4 ${showDarkTheme ? "opacity-100" : "opacity-0"}`}
-            />
-            <Moon
-              className={`absolute inset-0 m-auto h-4 w-4 ${showDarkTheme ? "opacity-0" : "opacity-100"}`}
-            />
-          </button>
+          />
         </div>
 
         <div className="flex items-center gap-3 md:hidden">
-          <button
-            type="button"
+          <ThemeToggleButton
+            isDark={isDark}
+            mounted={mounted}
             onClick={toggleTheme}
             className="relative h-8 w-8 rounded-full bg-secondary text-foreground"
-            aria-label={showDarkTheme ? "Switch to light mode" : "Switch to dark mode"}
-          >
-            <Sun
-              className={`absolute inset-0 m-auto h-4 w-4 ${showDarkTheme ? "opacity-100" : "opacity-0"}`}
-            />
-            <Moon
-              className={`absolute inset-0 m-auto h-4 w-4 ${showDarkTheme ? "opacity-0" : "opacity-100"}`}
-            />
-          </button>
+          />
           <button
             type="button"
             onClick={() => setMobileOpen((current) => !current)}
